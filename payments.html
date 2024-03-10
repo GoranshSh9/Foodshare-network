@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Form</title>
+</head>
+<body>
+    <form id="payment-form">
+        <label for="card-element">Credit or debit card</label>
+        <div id="card-element"></div>
+
+        <label for="amount">Amount</label>
+        <input type="number" id="amount" name="amount" min="1" required>
+
+        <button type="submit" id="submit-payment">Submit Payment</button>
+    </form>
+
+    <!-- Include Stripe JavaScript library -->
+    <script src="https://js.stripe.com/v3/"></script>
+
+    <!-- Your custom payment script -->
+    <script>
+        // Set your publishable key
+        const stripe = Stripe('your_publishable_key_here');
+
+        // Create a card element
+        const cardElement = stripe.elements().create('card');
+        cardElement.mount('#card-element');
+
+        // Handle form submission
+        const form = document.getElementById('payment-form');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Get the amount from the form
+            const amount = form.amount.value;
+
+            // Create a payment method
+            const paymentMethod = await stripe.createPaymentMethod({
+                type: 'card',
+                card: cardElement,
+                billing_details: {
+                    name: 'Your Customer Name',
+                },
+            });
+
+            // Send the payment method to your server
+            const response = await fetch('/your-payment-endpoint', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    paymentMethodId: paymentMethod.id,
+                    amount: amount,
+                }),
+            });
+
+            // Handle the response from your server
+            const { error } = await response.json();
+
+            if (error) {
+                // Display error.message in your UI.
+            } else {
+                // The payment has been processed!
+                // You can now show a success message to your customer
+            }
+        });
+    </script>
+</body>
+</html>
